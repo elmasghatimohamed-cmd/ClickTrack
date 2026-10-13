@@ -11,6 +11,7 @@
     <bean id="publisherService"
           class="ma.clicktrack.service.implementation.PublisherServiceImpl">
         <constructor-arg ref="publisherRepository"/>
+        <constructor-arg ref="linkService"/>
     </bean>
 
     <bean id="linkRepository"

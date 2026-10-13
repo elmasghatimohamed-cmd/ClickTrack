@@ -13,4 +13,11 @@
         <constructor-arg ref="publisherRepository"/>
     </bean>
 
+    <bean id="linkRepository"
+          class="ma.clicktrack.repository.implementation.LinkRepositoryImpl" />
+   <bean id="linkService"
+         class="ma.clicktrack.service.implementation.LinkServiceImpl">
+       <constructor-arg ref="linkRepository" />
+   </bean>
+
 </beans>

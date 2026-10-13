@@ -6,14 +6,14 @@ public class Publisher {
     private String firstname;
     private String lastname;
     private String email;
-    private Category categoty;
+    private Category category;
 
-    public Publisher(int id, String firstname, String lastname, String email, Category categoty) {
+    public Publisher(int id, String firstname, String lastname, String email, Category category) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
         this.email = email;
-        this.categoty = categoty;
+        this.category = category;
     }
 
     public int getId() {
@@ -48,11 +48,11 @@ public class Publisher {
         this.email = email;
     }
 
-    public Category getCategoty() {
-        return categoty;
+    public Category getCategory() {
+        return category;
     }
 
-    public void setCategoty(Category categoty) {
-        this.categoty = categoty;
+    public void setCategory(Category category) {
+        this.category = category;
     }
 }

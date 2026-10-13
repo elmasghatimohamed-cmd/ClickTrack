@@ -1,14 +1,19 @@
 package ma.clicktrack.service;
 
-import ma.clicktrack.repository.PublisherRepository;
+import ma.clicktrack.model.Publisher;
 
-public class PublisherService {
+import java.util.List;
+import java.util.Optional;
 
-    private final PublisherRepository repository;
+public interface PublisherService {
 
-    public PublisherService(PublisherRepository repository){
-        this.repository = repository;
-    }
+    Optional<Publisher> findById(long id);
 
+    List<Publisher> findAll();
 
+    void save(Publisher publisher);
+
+    void update(Publisher publisher);
+
+    void delete(long id);
 }

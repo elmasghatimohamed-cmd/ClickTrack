@@ -21,4 +21,9 @@
        <constructor-arg ref="linkRepository" />
    </bean>
 
+    <bean id="dataInitializer"
+          class="ma.clicktrack.config.DataInitializer"
+          init-method="init">
+        <constructor-arg ref="publisherService"/>
+    </bean>
 </beans>

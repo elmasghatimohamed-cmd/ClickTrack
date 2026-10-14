@@ -14,4 +14,7 @@ public interface LinkService {
     void save(Link link);
 
     void delete(Link link);
+
+    Link create(Integer publisherId, String offre, String urlDestination);
+
 }

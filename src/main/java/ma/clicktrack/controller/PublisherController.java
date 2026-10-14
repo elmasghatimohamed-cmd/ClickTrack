@@ -1,14 +1,16 @@
+
 package ma.clicktrack.controller;
 
-
+import ma.clicktrack.dto.CreateLinkRequest;
+import ma.clicktrack.model.Link;
 import ma.clicktrack.model.Publisher;
+import ma.clicktrack.service.LinkService;
 import ma.clicktrack.service.PublisherService;
-import org.springframework.http.MediaType;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.PathVariable;
 
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
@@ -18,9 +20,11 @@ import java.util.Map;
 public class PublisherController {
 
     private final PublisherService publisherService;
+    private final LinkService linkService;
 
-    public PublisherController(PublisherService publisherService) {
+    public PublisherController(PublisherService publisherService, LinkService linkService) {
         this.publisherService = publisherService;
+        this.linkService = linkService;
     }
 
     @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
@@ -32,6 +36,24 @@ public class PublisherController {
     public List <Map<String,Object>> getOffres(@PathVariable("id") long id){
         return publisherService.getOffres(id);
     }
+
+    @PostMapping(value = "/{id}/liens",
+            consumes = MediaType.APPLICATION_JSON_VALUE,
+            produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> createLink(@PathVariable("id") Integer id,
+            @RequestBody CreateLinkRequest request) {
+
+        try {
+            Link created = linkService.create(id, request.getOffre(), request.getUrlDestination());
+
+            return ResponseEntity
+                    .status(HttpStatus.CREATED)
+                    .body(created);
+
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", e.getMessage()));
+        }
+    }
 }
-
-

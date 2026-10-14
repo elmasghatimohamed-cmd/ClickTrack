@@ -6,14 +6,29 @@ import ma.clicktrack.repository.LinkRepository;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 public class LinkRepositoryImpl implements LinkRepository {
 
     private final List<Link> links = new ArrayList<>();
 
+    public int generateId() {
+        return links.stream()
+                .mapToInt(Link::getId)
+                .max()
+                .orElse(0) + 1;
+    }
+
     @Override
     public List<Link> findAll() {
         return new ArrayList<>(links);
+    }
+
+    @Override
+    public Optional<Link> findById(Integer id) {
+        return links.stream()
+                .filter(link -> link.getId().equals(id))
+                .findFirst();
     }
 
     @Override
@@ -31,6 +46,7 @@ public class LinkRepositoryImpl implements LinkRepository {
             links.add(link);
         }
     }
+
 
 
     @Override

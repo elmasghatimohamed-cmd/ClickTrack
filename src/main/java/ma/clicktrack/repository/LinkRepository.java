@@ -15,4 +15,8 @@ public interface LinkRepository {
     void save(Link link);
 
     void delete(Link link);
+
+    Optional<Link> findById(Integer id);
+
+    int generateId();
 }

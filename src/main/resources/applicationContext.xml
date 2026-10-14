@@ -19,6 +19,7 @@
    <bean id="linkService"
          class="ma.clicktrack.service.implementation.LinkServiceImpl">
        <constructor-arg ref="linkRepository" />
+       <constructor-arg ref="publisherRepository"/>
    </bean>
 
     <bean id="dataInitializer"

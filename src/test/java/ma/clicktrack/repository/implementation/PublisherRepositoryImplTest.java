@@ -13,115 +13,126 @@ import static org.junit.jupiter.api.Assertions.*;
 class PublisherRepositoryImplTest {
 
     private PublisherRepositoryImpl repository;
-    private Publisher publisher;
+    private Publisher mohamed;
+    private Publisher sara;
 
     @BeforeEach
     void setUp() {
         repository = new PublisherRepositoryImpl();
 
-        publisher = new Publisher(
-                1,
-                "Mohamed",
-                "El Masghati",
-                "mohamed@example.com",
-                Category.YOUTUBER
+        mohamed = new Publisher(
+                1, "Mohamed", "El Masghati",
+                "mohamed@example.com", Category.INFLUENCER
+        );
+
+        sara = new Publisher(
+                2, "Sara", "Amrani",
+                "sara@example.com", Category.YOUTUBER
         );
     }
 
     @Test
-    void shouldSavePublisher() {
-        repository.save(publisher);
-
-        assertEquals(1, repository.findAll().size());
-        assertTrue(repository.findById(1).isPresent());
+    void findAllShouldReturnEmptyListInitially() {
+        assertTrue(repository.findAll().isEmpty());
     }
 
     @Test
-    void shouldNotSaveDuplicatePublisher() {
-        repository.save(publisher);
-        repository.save(publisher);
+    void saveShouldAddPublisher() {
+        repository.save(mohamed);
 
         assertEquals(1, repository.findAll().size());
+        assertTrue(repository.findById(1L).isPresent());
     }
 
     @Test
-    void shouldFindPublisherById() {
-        repository.save(publisher);
+    void saveShouldNotAddDuplicateId() {
+        repository.save(mohamed);
+        repository.save(new Publisher(
+                1, "Autre", "Nom",
+                "autre@example.com", Category.BLOGUER
+        ));
 
-        Optional<Publisher> result = repository.findById(1);
+        assertEquals(1, repository.findAll().size());
+        assertEquals(
+                "Mohamed",
+                repository.findById(1L).orElseThrow().getFirstname()
+        );
+    }
+
+    @Test
+    void findByIdShouldReturnPublisherWhenItExists() {
+        repository.save(mohamed);
+
+        Optional<Publisher> result = repository.findById(1L);
 
         assertTrue(result.isPresent());
         assertEquals("Mohamed", result.get().getFirstname());
     }
 
     @Test
-    void shouldReturnEmptyWhenPublisherDoesNotExist() {
-        assertTrue(repository.findById(99).isEmpty());
+    void findByIdShouldReturnEmptyWhenPublisherDoesNotExist() {
+        assertTrue(repository.findById(999L).isEmpty());
     }
 
     @Test
-    void shouldReturnAllPublishers() {
-        repository.save(publisher);
+    void findAllShouldReturnAllPublishers() {
+        repository.save(mohamed);
+        repository.save(sara);
 
-        Publisher secondPublisher = new Publisher(
-                2,
-                "Ali",
-                "Amrani",
-                "ali@example.com",
-                Category.INFLUENCER
-        );
-
-        repository.save(secondPublisher);
-
-        List<Publisher> publishers = repository.findAll();
-
-        assertEquals(2, publishers.size());
+        assertEquals(2, repository.findAll().size());
     }
 
     @Test
-    void shouldUpdateExistingPublisher() {
-        repository.save(publisher);
+    void findAllShouldReturnDefensiveCopy() {
+        repository.save(mohamed);
 
-        Publisher updatedPublisher = new Publisher(
-                1,
-                "Mohamed",
-                "Updated",
-                "updated@example.com",
-                Category.BLOGUER
-        );
+        List<Publisher> result = repository.findAll();
+        result.clear();
 
-        repository.update(updatedPublisher);
-
-        Optional<Publisher> result = repository.findById(1);
-
-        assertTrue(result.isPresent());
-        assertEquals("Updated", result.get().getLastname());
-        assertEquals("updated@example.com", result.get().getEmail());
         assertEquals(1, repository.findAll().size());
     }
 
     @Test
-    void shouldNotUpdateNonExistingPublisher() {
-        repository.update(publisher);
+    void updateShouldReplaceExistingPublisher() {
+        repository.save(mohamed);
+
+        Publisher updated = new Publisher(
+                1, "Mohamed", "Architect",
+                "updated@example.com", Category.INFLUENCER
+        );
+
+        repository.update(updated);
+
+        assertEquals(
+                "Architect",
+                repository.findById(1L).orElseThrow().getLastname()
+        );
+        assertEquals(1, repository.findAll().size());
+    }
+
+    @Test
+    void updateShouldDoNothingWhenPublisherDoesNotExist() {
+        repository.update(mohamed);
 
         assertTrue(repository.findAll().isEmpty());
     }
 
     @Test
-    void shouldDeletePublisher() {
-        repository.save(publisher);
+    void deleteShouldRemovePublisherById() {
+        repository.save(mohamed);
+        repository.save(sara);
 
-        repository.delete(1);
+        repository.delete(1L);
 
-        assertTrue(repository.findAll().isEmpty());
-        assertTrue(repository.findById(1).isEmpty());
+        assertTrue(repository.findById(1L).isEmpty());
+        assertEquals(1, repository.findAll().size());
     }
 
     @Test
-    void shouldNotDeleteOtherPublishers() {
-        repository.save(publisher);
+    void deleteShouldDoNothingWhenPublisherDoesNotExist() {
+        repository.save(mohamed);
 
-        repository.delete(99);
+        repository.delete(999L);
 
         assertEquals(1, repository.findAll().size());
     }

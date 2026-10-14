@@ -7,6 +7,7 @@ import ma.clicktrack.repository.PublisherRepository;
 import ma.clicktrack.service.LinkService;
 
 import java.util.List;
+import java.util.Optional;
 
 public class LinkServiceImpl implements LinkService {
 
@@ -50,5 +51,10 @@ public class LinkServiceImpl implements LinkService {
         linkRepository.save(link);
 
         return link;
+    }
+
+    @Override
+    public Optional<Link> clickTrack(Integer id) {
+        return linkRepository.incrementClicks(id);
     }
 }

@@ -19,4 +19,6 @@ public interface LinkRepository {
     Optional<Link> findById(Integer id);
 
     int generateId();
+
+    Optional<Link> incrementClicks(Integer id);
 }

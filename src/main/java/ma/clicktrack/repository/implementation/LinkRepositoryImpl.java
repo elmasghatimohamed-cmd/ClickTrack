@@ -55,4 +55,19 @@ public class LinkRepositoryImpl implements LinkRepository {
                 existing.getId().equals(link.getId()));
     }
 
+    @Override
+    public synchronized Optional<Link> incrementClicks(Integer id) {
+        Optional<Link> optionalLink = findById(id);
+
+        if (optionalLink.isPresent()) {
+            Link link = optionalLink.get();
+
+            long currentClicks = link.getClicks() == null ? 0L : link.getClicks();
+
+            link.setClicks(currentClicks + 1);
+        }
+
+        return optionalLink;
+    }
+
 }

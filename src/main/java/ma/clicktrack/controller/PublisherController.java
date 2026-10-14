@@ -56,4 +56,12 @@ public class PublisherController {
                     .body(Map.of("error", e.getMessage()));
         }
     }
+
+    @GetMapping(value = "/{id}/liens", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<Link>> getLiens(@PathVariable("id") Integer id) {
+
+        return publisherService.findById(id.longValue())
+                .map(publisher -> ResponseEntity.ok(linkService.findByPublisher(publisher)))
+                .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 }

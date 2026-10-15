@@ -12,6 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.transaction.annotation.Transactional;
+
+@Transactional
 public class PublisherServiceImpl implements PublisherService {
 
     private final PublisherRepository repository;

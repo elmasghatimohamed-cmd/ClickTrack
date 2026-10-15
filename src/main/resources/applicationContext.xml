@@ -1,30 +1,101 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <beans xmlns="http://www.springframework.org/schema/beans"
        xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:tx="http://www.springframework.org/schema/tx"
        xsi:schemaLocation="
            http://www.springframework.org/schema/beans
-           https://www.springframework.org/schema/beans/spring-beans.xsd">
+           https://www.springframework.org/schema/beans/spring-beans.xsd
+           http://www.springframework.org/schema/tx
+           https://www.springframework.org/schema/tx/spring-tx.xsd">
+
+
+    <bean id="dataSource"
+          class="org.springframework.jdbc.datasource.DriverManagerDataSource">
+
+        <property name="driverClassName"
+                  value="org.postgresql.Driver"/>
+
+        <property name="url"
+                  value="jdbc:postgresql://host.docker.internal:5433/clicktrack"/>
+
+        <property name="username" value="mohamed"/>
+        <property name="password" value="admin123"/>
+
+    </bean>
+
+    <bean id="entityManagerFactory"
+          class="org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean">
+
+        <property name="dataSource" ref="dataSource"/>
+
+        <property name="packagesToScan"
+                  value="ma.clicktrack.model"/>
+
+        <property name="jpaVendorAdapter">
+            <bean class="org.springframework.orm.jpa.vendor.HibernateJpaVendorAdapter">
+
+                <property name="databasePlatform"
+                          value="org.hibernate.dialect.PostgreSQLDialect"/>
+
+                <property name="showSql" value="true"/>
+                <property name="generateDdl" value="true"/>
+
+            </bean>
+        </property>
+
+        <property name="jpaProperties">
+            <props>
+
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+
+                <prop key="hibernate.format_sql">true</prop>
+
+            </props>
+        </property>
+
+    </bean>
+
+    <bean class="org.springframework.orm.jpa.support.PersistenceAnnotationBeanPostProcessor"/>
+
+    <bean id="transactionManager"
+          class="org.springframework.orm.jpa.JpaTransactionManager">
+
+        <property name="entityManagerFactory"
+                  ref="entityManagerFactory"/>
+
+    </bean>
+
+    <tx:annotation-driven transaction-manager="transactionManager"/>
 
     <bean id="publisherRepository"
-          class="ma.clicktrack.repository.implementation.PublisherRepositoryImpl"/>
+          class="ma.clicktrack.repository.jpa.PublisherRepositoryJpaImpl"/>
+
+    <bean id="linkRepository"
+          class="ma.clicktrack.repository.implementation.LinkRepositoryImpl"/>
 
     <bean id="publisherService"
           class="ma.clicktrack.service.implementation.PublisherServiceImpl">
+
         <constructor-arg ref="publisherRepository"/>
         <constructor-arg ref="linkService"/>
+
     </bean>
 
-    <bean id="linkRepository"
-          class="ma.clicktrack.repository.implementation.LinkRepositoryImpl" />
-   <bean id="linkService"
-         class="ma.clicktrack.service.implementation.LinkServiceImpl">
-       <constructor-arg ref="linkRepository" />
-       <constructor-arg ref="publisherRepository"/>
-   </bean>
+    <bean id="linkService"
+          class="ma.clicktrack.service.implementation.LinkServiceImpl">
+
+        <constructor-arg ref="linkRepository"/>
+        <constructor-arg ref="publisherRepository"/>
+
+    </bean>
+
 
     <bean id="dataInitializer"
           class="ma.clicktrack.config.DataInitializer"
           init-method="init">
+
         <constructor-arg ref="publisherService"/>
+
     </bean>
+
 </beans>

@@ -291,7 +291,7 @@ src/
     └── java/
 ```
 
-The structure above describes the main application packages. Keep the `dto/` directory in this tree only if it exists in the repository.
+The structure above describes the main application packages. 
 
 ## Configuration
 

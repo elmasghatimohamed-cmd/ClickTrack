@@ -15,7 +15,7 @@ public class Link {
     private String urlDestination;
     @Column(nullable = false)
     private Long clicks = 0L;
-    @ManyToOne(fetch = FetchType.LAZY, optional = false)
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
     @JoinColumn(name = "publisher_id", nullable = false)
     private Publisher publisher;
 

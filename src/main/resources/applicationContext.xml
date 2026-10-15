@@ -71,7 +71,7 @@
           class="ma.clicktrack.repository.jpa.PublisherRepositoryJpaImpl"/>
 
     <bean id="linkRepository"
-          class="ma.clicktrack.repository.implementation.LinkRepositoryImpl"/>
+          class="ma.clicktrack.repository.jpa.LinkRepositoryJpaImpl"/>
 
     <bean id="publisherService"
           class="ma.clicktrack.service.implementation.PublisherServiceImpl">

@@ -1,22 +1,25 @@
 # ClickTrack
 
-**A Link Tracking & Click Analytics REST API built with Spring MVC**
+**A Link Tracking & Click Analytics REST API built with Spring MVC, Spring ORM, and PostgreSQL.**
 
-ClickTrack is a Java web application that enables publishers to create tracking links, monitor user clicks, and analyze the performance of their promotional offers through a RESTful API.
+ClickTrack is a Java web application that allows publishers to create promotional tracking links, record clicks, and analyze offer performance through a RESTful API.
 
-The project focuses on clean layered architecture, dependency injection, REST API design, and in-memory data management using Spring Framework and XML-based configuration.
+The project demonstrates layered architecture, dependency injection, Spring MVC, JPA persistence, transaction management, unit testing, and containerized deployment with Docker.
 
 ## Features
 
 - **Publisher Management:** Retrieve publishers and their information.
-- **Tracking Link Creation:** Create promotional tracking links associated with publishers.
-- **Click Tracking:** Record clicks on tracking links and retrieve their destination URLs.
-- **Offer Analytics:** Aggregate click statistics and link counts by offer.
-- **RESTful API:** Expose endpoints using HTTP methods and appropriate status codes.
-- **Layered Architecture:** Separate controllers, services, repositories, models, and DTOs.
+- **Tracking Link Creation:** Create tracking links associated with existing publishers.
+- **Click Tracking:** Increment click counters and retrieve tracking information.
+- **Offer Analytics:** Aggregate link counts and total clicks by offer.
+- **Persistent Storage:** Store publishers and tracking links in PostgreSQL using JPA and Hibernate.
+- **RESTful API:** Expose endpoints using HTTP methods and appropriate response status codes.
+- **Layered Architecture:** Separate controllers, services, repositories, and domain models, with DTOs where needed.
 - **Dependency Injection:** Inject dependencies through interfaces using Spring XML configuration.
-- **Thread-Safe Click Counting:** Synchronize click counter updates within the repository.
-- **Initial Data Seeding:** Populate the application with sample data through a data initializer.
+- **Transaction Management:** Manage persistence operations through Spring's transaction infrastructure.
+- **Database-Generated IDs:** Let PostgreSQL generate entity identifiers.
+- **Initial Data Seeding:** Populate an empty publisher table with sample data during application startup.
+- **Docker Deployment:** Run the application on Apache Tomcat in a Docker container.
 
 ## Tech Stack
 
@@ -24,16 +27,20 @@ The project focuses on clean layered architecture, dependency injection, REST AP
 |---|---|
 | Java 17 | Core programming language |
 | Spring Framework | Dependency injection and application infrastructure |
-| Spring MVC | REST API and request handling |
+| Spring MVC | REST API and HTTP request handling |
+| Spring ORM | Integration between Spring and JPA |
+| Jakarta Persistence (JPA) | Object-relational mapping and persistence API |
+| Hibernate ORM | JPA implementation |
+| PostgreSQL | Relational database |
 | Maven | Dependency management and build automation |
-| Apache Tomcat 10.1 | Servlet container and deployment |
-| XML | Spring bean and web application configuration |
+| Apache Tomcat 10.1 | Servlet container |
+| XML | Spring and web application configuration |
 | Docker | Containerized deployment |
-| JUnit | Unit testing |
+| JUnit and Mockito | Unit testing and dependency mocking |
 
 ## Architecture
 
-ClickTrack follows a layered architecture to separate responsibilities and improve maintainability.
+ClickTrack follows a layered architecture that separates HTTP handling, business logic, and data access.
 
 ```text
 HTTP Client
@@ -48,28 +55,37 @@ Service Layer
 Repository Interface
     |
     v
-Repository Implementation
+JPA Repository Implementation
     |
     v
-In-Memory Storage (ArrayList)
+EntityManager
+    |
+    v
+Hibernate ORM
+    |
+    v
+PostgreSQL Database
 ```
 
 ### Layer Responsibilities
 
-- **Controller:** Handles HTTP requests, validates request data, and returns HTTP responses.
+- **Controller:** Handles HTTP requests, reads request parameters and bodies, and returns HTTP responses.
 - **Service:** Implements business rules and coordinates application operations.
-- **Repository:** Manages data access and storage operations.
-- **Model:** Represents the application's core domain entities.
-- **DTO:** Defines the structure of request and response payloads.
-- **Spring Configuration:** Registers beans and wires dependencies through XML files.
+- **Repository Interface:** Defines data-access operations independently of the persistence implementation.
+- **JPA Repository:** Implements repository operations using `EntityManager`.
+- **Model:** Represents domain entities and their relationships.
+- **DTO:** Defines dedicated structures for request or response payloads where required.
+- **Spring Configuration:** Registers application beans and configures dependency injection, persistence, and transaction management.
 
-The application uses interface-based dependency injection to reduce coupling between layers and facilitate testing.
+The application uses interface-based dependency injection to reduce coupling and make individual components easier to test.
 
 ## Domain Models
 
 ### Publisher
 
-Represents a content creator or publisher who manages tracking links.
+Represents a content creator who manages tracking links.
+
+**Fields:**
 
 - `id`
 - `firstname`
@@ -87,15 +103,40 @@ Supported categories:
 
 Represents a promotional tracking link associated with a publisher.
 
+**Fields:**
+
 - `id`
 - `offre`
 - `urlDestination`
 - `clicks`
 - `publisher`
 
+The `Link` entity has a many-to-one relationship with `Publisher`. Each link belongs to one publisher, while a publisher can manage multiple links.
+
+Entity identifiers are generated by the database through JPA's `GenerationType.IDENTITY` strategy.
+
+## Persistence and Transactions
+
+ClickTrack uses Spring ORM, Jakarta Persistence, Hibernate, and PostgreSQL to persist application data.
+
+The persistence layer includes:
+
+- `LocalContainerEntityManagerFactoryBean` to configure the JPA persistence unit.
+- `EntityManager` to persist, retrieve, update, and delete entities.
+- `@PersistenceContext` to inject the managed entity manager.
+- `JpaTransactionManager` to coordinate JPA transactions.
+- `@Transactional` to define transaction boundaries.
+- Hibernate schema-update configuration to synchronize entity mappings with the database schema during development.
+
+The JPA repositories implement the same repository interfaces used by the service layer. This keeps business logic independent of the persistence implementation.
+
+The `Link` entity currently uses eager loading for its many-to-one relationship with `Publisher`. This allows the associated publisher to be loaded when a link is retrieved, which is relevant to the current JSON serialization behavior. Fetch strategies should still be chosen according to actual data-access needs; dedicated response DTOs can provide more control over API payloads.
+
+> **Development note:** Hibernate schema updates are useful during development, but production deployments should use a controlled database migration strategy.
+
 ## REST API
 
-Base URL:
+**Base URL**
 
 ```text
 http://localhost:8081/clicktrack
@@ -105,9 +146,21 @@ http://localhost:8081/clicktrack
 
 `GET /api/publishers`
 
-Returns the list of registered publishers.
+Returns all registered publishers.
 
-**Response:** `200 OK`
+**Example response: `200 OK`**
+
+```json
+[
+  {
+    "id": 1,
+    "firstname": "Mohamed",
+    "lastname": "El Masghati",
+    "email": "mohamed@example.com",
+    "category": "INFLUENCER"
+  }
+]
+```
 
 ### 2. Create a Tracking Link
 
@@ -115,7 +168,7 @@ Returns the list of registered publishers.
 
 Creates a tracking link for the specified publisher.
 
-**Request body:**
+**Request body**
 
 ```json
 {
@@ -124,64 +177,93 @@ Creates a tracking link for the specified publisher.
 }
 ```
 
-**Responses:**
+**Expected responses**
+
 - `201 Created` when the link is created successfully.
-- `404 Not Found` when the publisher does not exist.
+- `404 Not Found` when the specified publisher does not exist.
 
 ### 3. Retrieve Publisher Links
 
 `GET /api/publishers/{id}/liens`
 
-Returns the links associated with a publisher, including their click counts.
+Returns the links associated with a publisher, including click counts and publisher information.
 
-**Responses:**
-- `200 OK`
-- `404 Not Found` when the publisher does not exist.
+**Example response: `200 OK`**
+
+```json
+[
+  {
+    "id": 1,
+    "offre": "Nike",
+    "urlDestination": "https://www.nike.com",
+    "clicks": 7,
+    "publisher": {
+      "id": 1,
+      "firstname": "Mohamed",
+      "lastname": "El Masghati",
+      "email": "mohamed@example.com",
+      "category": "INFLUENCER"
+    }
+  }
+]
+```
+
+`404 Not Found` is returned when the specified publisher does not exist.
 
 ### 4. Retrieve Offer Statistics
 
 `GET /api/publishers/{id}/offres`
 
-Returns aggregated statistics for the publisher's offers, including the number of links and total clicks.
+Returns aggregated statistics for a publisher's offers, including the number of links and total clicks for each offer.
 
-**Example response:**
+**Example response: `200 OK`**
 
 ```json
 [
   {
-    "offre": "Premium",
+    "offre": "Nike",
     "nombreliens": 2,
-    "clicks": 11
+    "clicks": 15
+  },
+  {
+    "offre": "Adidas",
+    "nombreliens": 2,
+    "clicks": 10
   }
 ]
 ```
 
-**Response:** `200 OK`
+The values above are illustrative and reflect a sample database state.
 
 ### 5. Track a Click
 
 `GET /t/{id}`
 
-Increments the click counter for the specified tracking link and returns tracking information.
+Records a click on the specified tracking link and returns tracking information.
 
-**Example:** `GET /t/1`
+**Example request**
 
-**Example response:**
+```http
+GET /t/1
+```
+
+**Example response**
 
 ```json
 {
-  "urlRedirection": "https://example.com/premium",
+  "urlRedirection": "https://www.nike.com",
   "publisher": "Mohamed El Masghati",
-  "offre": "Premium",
-  "clicks": 5
+  "offre": "Nike",
+  "clicks": 8
 }
 ```
 
-**Responses:**
+**Expected responses**
+
 - `200 OK` when the tracking link exists.
 - `404 Not Found` when the tracking link does not exist.
 
-> Note: The current tracking endpoint returns JSON containing the destination URL. Automatic HTTP redirection is a separate enhancement.
+The current endpoint returns JSON containing the destination URL rather than automatically redirecting the HTTP client. The exact response fields and click-count semantics should match the controller's actual implementation.
 
 ## Project Structure
 
@@ -190,11 +272,13 @@ src/
 ├── main/
 │   ├── java/
 │   │   └── ma/clicktrack/
+│   │       ├── config/
 │   │       ├── controller/
 │   │       ├── dto/
 │   │       ├── model/
 │   │       ├── repository/
-│   │       │   └── implementation/
+│   │       │   ├── implementation/
+│   │       │   └── jpa/
 │   │       └── service/
 │   │           └── implementation/
 │   ├── resources/
@@ -207,133 +291,192 @@ src/
     └── java/
 ```
 
+The structure above describes the main application packages. Keep the `dto/` directory in this tree only if it exists in the repository.
+
 ## Configuration
 
-ClickTrack uses XML-based Spring configuration.
+ClickTrack uses XML-based Spring configuration alongside annotations.
 
-- `applicationContext.xml`: Registers repositories, services, and the data initializer.
-- `dispatcher-servlet.xml`: Configures Spring MVC, component scanning for controllers, and annotation-driven request mapping.
-- `web.xml`: Defines the web application's servlet configuration and application context initialization.
+- **`applicationContext.xml`:** Configures repositories, services, the JPA entity manager factory, transaction manager, database connection, and data initializer.
+- **`dispatcher-servlet.xml`:** Configures Spring MVC, controller scanning, and annotation-driven request mapping.
+- **`web.xml`:** Defines the web application and initializes the Spring application contexts.
 
-Controllers use annotations such as `@RestController`, `@GetMapping`, and `@PostMapping` for request mapping, while application beans are explicitly registered in XML.
+Controllers use annotations such as `@RestController`, `@GetMapping`, and `@PostMapping`. Application infrastructure and bean dependencies are configured through Spring XML.
 
 ## Getting Started
 
 ### Prerequisites
 
-Make sure the following tools are installed:
+Install the following tools:
 
 - JDK 17
 - Apache Maven
-- Docker Desktop, if using containerized deployment
+- Docker Desktop
+- Git
 
 ### 1. Clone the Repository
 
 ```bash
 git clone https://github.com/elmasghatimohamed-cmd/ClickTrack.git
-cd clicktrack
+cd ClickTrack
 ```
 
-### 2. Build the Application
+### 2. Configure the Database
+
+The application expects a PostgreSQL database with the following development configuration:
+
+| Setting | Value |
+|---|---|
+| Database | `clicktrack` |
+| Username | `your-username` |
+| Password | `your-password` |
+| PostgreSQL host port | `5433` |
+| JDBC URL | `jdbc:postgresql://host.docker.internal:5433/clicktrack` |
+
+Replace the username and password placeholders with the credentials configured for your PostgreSQL container. Update the connection settings in `applicationContext.xml` to match.
+
+These are example values, not a claim about the credentials on an existing machine. For the current local setup, use the credentials already configured for your database.
+
+**Security note:** Use development-only credentials locally. Never commit real credentials or production secrets to a public repository.
+
+### 3. Build and Test the Application
+
+Run the test suite:
 
 ```bash
-mvn clean package
+mvn clean test
 ```
 
-This command compiles the source code, runs the configured tests, and generates the WAR artifact.
+Package the application:
 
-### 3. Deploy with Docker
+```bash
+mvn package
+```
 
-Build the Docker image:
+Maven generates the WAR artifact under the `target/` directory.
+
+### 4. Start PostgreSQL with Docker
+
+Create a persistent Docker volume:
+
+```bash
+docker volume create clicktrack-postgres-data
+```
+
+If the PostgreSQL container does not already exist, start it:
+
+```bash
+docker run -d \
+  --name clicktrack-postgres \
+  -e POSTGRES_DB=clicktrack \
+  -e POSTGRES_USER=your-username \
+  -e POSTGRES_PASSWORD=your-password \
+  -p 5433:5432 \
+  -v clicktrack-postgres-data:/var/lib/postgresql/data \
+  postgres:16
+```
+
+Replace the credential placeholders with your chosen development credentials. Make sure they match the application configuration.
+
+If `clicktrack-postgres` already exists, reuse that container instead of creating another with the same name. An existing database volume retains its initialized database state and credentials; changing environment variables on a recreated container does not automatically change credentials inside an existing database.
+
+Wait until PostgreSQL is ready before starting the application.
+
+### 5. Build the Application Image
+
+From the project root:
 
 ```bash
 docker build -t clicktrack-app:1.0 .
 ```
 
-Start the container:
+Ensure that the Dockerfile copies the generated WAR to the Tomcat webapps directory as `clicktrack.war`.
+
+### 6. Run ClickTrack
+
+If the application container does not already exist, start it:
 
 ```bash
-docker run -d --name clicktrack-tomcat -p 8081:8080 clicktrack-app:1.0
+docker run -d \
+  --name clicktrack-tomcat \
+  -p 8081:8080 \
+  clicktrack-app:1.0
 ```
 
-The API will be accessible at:
+The current Docker Desktop configuration connects the application to PostgreSQL through `host.docker.internal` on port `5433`.
+
+Inspect startup logs if needed:
+
+```bash
+docker logs -f clicktrack-tomcat
+```
+
+Once Tomcat has deployed the WAR and Spring has initialized the JPA persistence unit, the API is available at:
 
 ```text
 http://localhost:8081/clicktrack
 ```
 
-Ensure that the Docker image deploys the generated WAR under the `clicktrack` context path.
+The data initializer inserts sample publishers when the publisher table is empty. Existing publisher data is preserved on subsequent application startups.
 
-### 4. Test the API
-
-You can use Postman, PowerShell, or another HTTP client to test the endpoints.
-
-Retrieve publishers:
-
-```http
-GET http://localhost:8081/clicktrack/api/publishers
-```
-
-Create a tracking link:
-
-```http
-POST http://localhost:8081/clicktrack/api/publishers/1/liens
-Content-Type: application/json
-```
-
-```json
-{
-  "offre": "Premium",
-  "urlDestination": "https://example.com/premium"
-}
-```
-
-Track a click:
-
-```http
-GET http://localhost:8081/clicktrack/t/1
-```
+The PostgreSQL volume preserves database files when the database container is recreated. Do not remove that volume unless you intentionally want to delete the persisted database data.
 
 ## Testing
 
-Run the automated test suite with:
+Run the automated tests with:
 
 ```bash
 mvn test
 ```
 
-The project includes unit tests for repository operations and service-layer business logic.
+The test suite covers repository operations and service-layer business logic, including JPA repository behavior tested with mocked dependencies.
 
-Concurrency testing can also be performed by sending multiple simultaneous requests to the tracking endpoint and comparing the number of successful requests with the change in the click counter.
+Additional integration tests against a real PostgreSQL database can verify:
+
+- Entity mappings and relationship loading.
+- Transaction boundaries and rollback behavior.
+- Database-generated identifiers.
+- Link creation and click-counter updates.
+- API responses and HTTP status codes.
+- Concurrent click tracking.
 
 ## Current Limitations
 
-- Data is stored in memory using `ArrayList`; application data is not persistent across application restarts.
-- Click counting is synchronized within the repository, but concurrency guarantees for all repository operations require separate verification.
-- Automatic HTTP redirection is not implemented in the current tracking endpoint.
-- Spring ORM integration is an optional enhancement and is not part of the current in-memory persistence implementation.
+- Some endpoints return domain entities instead of consistently using dedicated response DTOs.
+- Fetch strategies and JSON serialization require careful handling.
+- The tracking endpoint returns JSON instead of automatically redirecting the client.
+- Database schema updates rely on Hibernate configuration rather than versioned migration scripts.
+- Authentication and authorization are not implemented.
+- Production configuration and database secrets require stronger externalized configuration.
+- Integration tests against a real database should complement unit tests.
 
 ## Future Improvements
 
-- Integrate Spring ORM with a relational database.
-- Implement persistent storage for publishers and tracking links.
-- Add automatic HTTP redirection after tracking a click.
-- Strengthen concurrency guarantees for link creation, ID generation, and repository operations.
-- Add API documentation using OpenAPI/Swagger.
-- Introduce integration tests and automated API testing.
-- Add authentication, authorization, and request validation.
+- Introduce dedicated response DTOs for all API endpoints.
+- Add automatic HTTP redirection after recording a click.
+- Introduce Flyway or Liquibase for database schema migrations.
+- Externalize database credentials and environment-specific configuration.
+- Add authentication and role-based authorization.
+- Improve request validation and error-response consistency.
+- Add integration tests using PostgreSQL and automated API tests.
+- Add OpenAPI/Swagger documentation.
+- Evaluate atomic database updates for reliable click counting under concurrent requests.
+- Add CI/CD automation for testing, image building, and deployment.
 
 ## Learning Objectives
 
-This project provides practical experience with:
+ClickTrack provides hands-on experience with:
 
 - Spring Core and Inversion of Control (IoC).
-- Dependency injection and programming to interfaces.
+- Constructor-based dependency injection and programming to interfaces.
 - Layered architecture and separation of concerns.
 - Spring MVC and REST API development.
-- Maven-based Java web application builds.
-- Unit testing and concurrent request handling.
-- Docker-based deployment.
+- Spring ORM, JPA, and Hibernate.
+- Entity relationships and fetch strategies.
+- Transaction management.
+- PostgreSQL persistence and database-generated identifiers.
+- Unit testing with JUnit and Mockito.
+- Docker-based application deployment.
 
 ## Author
 

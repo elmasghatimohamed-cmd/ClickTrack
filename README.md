@@ -230,11 +230,9 @@ Make sure the following tools are installed:
 ### 1. Clone the Repository
 
 ```bash
-git clone <YOUR_REPOSITORY_URL>
+git clone https://github.com/elmasghatimohamed-cmd/ClickTrack.git
 cd clicktrack
 ```
-
-Replace `<YOUR_REPOSITORY_URL>` with the actual Git repository URL.
 
 ### 2. Build the Application
 

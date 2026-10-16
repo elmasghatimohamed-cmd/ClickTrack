@@ -45,5 +45,4 @@ public class PublisherRepositoryImpl implements PublisherRepository {
         publishers.removeIf(p -> p.getId() == id);
     }
 
-
 }

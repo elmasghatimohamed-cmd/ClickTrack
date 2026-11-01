@@ -1,14 +1,26 @@
 package ma.clicktrack.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "publisher")
 public class Publisher {
 
-    private int id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Integer id;
+    @Column(nullable = false)
     private String firstname;
+    @Column(nullable = false)
     private String lastname;
+    @Column(nullable = false, unique = true)
     private String email;
+    @Enumerated(EnumType.STRING)
     private Category category;
 
-    public Publisher(int id, String firstname, String lastname, String email, Category category) {
+    public Publisher() {}
+
+    public Publisher(Integer id, String firstname, String lastname, String email, Category category) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
@@ -16,11 +28,11 @@ public class Publisher {
         this.category = category;
     }
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 

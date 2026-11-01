@@ -9,6 +9,9 @@ import ma.clicktrack.service.LinkService;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.transaction.annotation.Transactional;
+
+@Transactional
 public class LinkServiceImpl implements LinkService {
 
     private final LinkRepository linkRepository;
@@ -42,11 +45,12 @@ public class LinkServiceImpl implements LinkService {
     @Override
     public Link create(Integer publisherId, String offre, String urlDestination) {
         Publisher publisher = publisherRepository.findById(publisherId.longValue())
-                .orElseThrow(() -> new IllegalArgumentException("Publisher introuvable : " + publisherId));
+                .orElseThrow(() ->
+                        new IllegalArgumentException(
+                                "Publisher introuvable : " + publisherId
+                        ));
 
-        Integer id = linkRepository.generateId();
-
-        Link link = new Link(id, offre, urlDestination, 0L, publisher);
+        Link link = new Link(null, offre, urlDestination, 0L, publisher);
 
         linkRepository.save(link);
 

@@ -1,13 +1,26 @@
 package ma.clicktrack.model;
 
+import jakarta.persistence.*;
+
+@Entity
+@Table(name = "link")
 public class Link {
 
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Integer id;
+    @Column(nullable = false)
     private String offre;
+    @Column(nullable = false)
     private String urlDestination;
-    private Long clicks;
+    @Column(nullable = false)
+    private Long clicks = 0L;
+    @ManyToOne(fetch = FetchType.EAGER, optional = false)
+    @JoinColumn(name = "publisher_id", nullable = false)
     private Publisher publisher;
 
+    public Link() {
+    }
     public Link(Integer id, String offre, String urlDestination, Long clicks, Publisher publisher) {
         this.id = id;
         this.offre = offre;

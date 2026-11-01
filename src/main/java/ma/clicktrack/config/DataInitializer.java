@@ -13,17 +13,18 @@ public class DataInitializer {
         }
 
         public void init() {
-                publisherService.save(new Publisher(
-                                1, "Mohamed", "El Masghati",
+                if (publisherService.findAll().isEmpty()) {
+                        publisherService.save(new Publisher(
+                                null, "Mohamed", "El Masghati",
                                 "mohamed@example.com", Category.INFLUENCER));
 
-                publisherService.save(new Publisher(
-                                2, "Sara", "Amrani",
+                        publisherService.save(new Publisher(
+                                null, "Sara", "Amrani",
                                 "sara@example.com", Category.YOUTUBER));
 
-                publisherService.save(new Publisher(
-                                3, "Youssef", "Alaoui",
+                        publisherService.save(new Publisher(
+                                null, "Youssef", "Alaoui",
                                 "youssef@example.com", Category.BLOGUER));
-
+                }
         }
 }
